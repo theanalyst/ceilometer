@@ -6,6 +6,7 @@ from awsauth import S3Auth
 from ceilometer.agent import plugin_base
 from ceilometer.openstack.common import log
 from ceilometer import sample
+from ceilometer.i18n import _
 
 LOG = log.getLogger(__name__)
 
@@ -26,11 +27,17 @@ class _Base(plugin_base.PollsterBase):
         self.secret = '5451764aaf8d4ca28d30d423c7a3f337'
         self.endpoint = 'http://127.0.0.1:8080/admin'
         self.host = '127.0.0.1:8080'
+        LOG.debug(_("RGW Poller initiaged"))
+        
+    @property    
+    def default_discovery(self):
+        return 'tenant'
 
 
 class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
-    def get_samples(self):
+    def get_samples(self, manager, cache, resources):
+        tenants = resources
         tenant = "admin"
         METHOD = "bucket"
         r = requests.get("{0}/{1}".format(self.endpoint, METHOD),

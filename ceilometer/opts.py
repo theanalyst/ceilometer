@@ -48,6 +48,7 @@ import ceilometer.neutron_client
 import ceilometer.notification
 import ceilometer.nova_client
 import ceilometer.objectstore.swift
+import ceilometer.objectstore.rgw
 import ceilometer.openstack.common.eventlet_backdoor
 import ceilometer.openstack.common.log
 import ceilometer.openstack.common.policy
@@ -127,7 +128,8 @@ def list_opts():
                          ceilometer.image.glance.SERVICE_OPTS,
                          ceilometer.neutron_client.SERVICE_OPTS,
                          ceilometer.nova_client.SERVICE_OPTS,
-                         ceilometer.objectstore.swift.SERVICE_OPTS,)),
+                         ceilometer.objectstore.swift.SERVICE_OPTS,
+			 ceilometer.objectstore.rgw.SERVICE_OPTS)),
         ('vmware', ceilometer.compute.virt.vmware.inspector.OPTS),
         ('xenapi', ceilometer.compute.virt.xenapi.inspector.OPTS),
     ]
