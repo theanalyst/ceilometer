@@ -38,7 +38,7 @@ class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
         tenants = resources
-        tenant = "admin"
+        tenant = "e5011a7741dd4408926858b168d88d78"
         METHOD = "bucket"
         r = requests.get("{0}/{1}".format(self.endpoint, METHOD),
                          params={"uid": tenant, "stats": True},
@@ -49,7 +49,7 @@ class ContainerObjectsPollster(_Base):
         for it in bucket_data:
             for k, v in it["usage"].items():
                 yield sample.Sample(
-                    name='storage.containers.objects',
+                    name='radosgw.containers.objects',
                     type=sample.TYPE_GAUGE,
                     volume=v["num_objects"],
                     unit='object',
