@@ -38,7 +38,6 @@ class _Base(plugin_base.PollsterBase):
         self.secret = cfg.CONF.service_credentials.rgw_secret_key
         self.endpoint = 'http://127.0.0.1:8080/admin'
         self.host = '127.0.0.1:8080'
-        LOG.debug(_("RGW Poller initiaged with %1".format(self.access_key)))
         
     @property
     def default_discovery(self):
@@ -81,7 +80,6 @@ class ContainersSizePollster(_Base):
                          params={"uid": tenant, "stats": True},
                          auth=S3Auth(self.access_key, self.secret, self.host)
                          )
-        LOG.debug(_("RGW Container Size Poller initiaged with %1".format(r.json())))
         bucket_data = r.json()
 
         for it in bucket_data:
