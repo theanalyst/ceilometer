@@ -1,12 +1,13 @@
-from oslo.utils import timeutils
-from oslo.config import cfg
 import requests
 from awsauth import S3Auth
 
+from oslo.utils import timeutils
+from oslo.config import cfg
+
+from ceilometer.i18n import _
+from ceilometer import sample
 from ceilometer.agent import plugin_base
 from ceilometer.openstack.common import log
-from ceilometer import sample
-from ceilometer.i18n import _
 
 LOG = log.getLogger(__name__)
 
@@ -16,20 +17,30 @@ SERVICE_OPTS = [
                help='Radosgw service type.'),
 ]
 
+CREDENTIAL_OPTS = [
+    cfg.StrOpt('rgw_access_key',
+               default='12345',
+               help='access_key for RGW Admin'),
+    cfg.StrOpt('rgw_secret_key',
+               default='12345',
+               help='secret key for RGW Admin')
+]
+
 cfg.CONF.register_opts(SERVICE_OPTS, group='service_types')
+cfg.CONF.register_opts(CREDENTIAL_OPTS, group='service_credentials')
 cfg.CONF.import_group('service_credentials', 'ceilometer.service')
 
 
 class _Base(plugin_base.PollsterBase):
 
     def __init__(self):
-        self.access_key = '100a440500b64c5eac30976bf8c65d96'
-        self.secret = '5451764aaf8d4ca28d30d423c7a3f337'
+        self.access_key = cfg.CONF.service_credentials.rgw_access_key
+        self.secret = cfg.CONF.service_credentials.rgw_secret_key
         self.endpoint = 'http://127.0.0.1:8080/admin'
         self.host = '127.0.0.1:8080'
-        LOG.debug(_("RGW Poller initiaged"))
+        LOG.debug(_("RGW Poller initiaged with %1".format(self.access_key)))
         
-    @property    
+    @property
     def default_discovery(self):
         return 'tenant'
 
@@ -38,7 +49,7 @@ class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
         tenants = resources
-        tenant = "e5011a7741dd4408926858b168d88d78"
+        tenant = "admin"
         METHOD = "bucket"
         r = requests.get("{0}/{1}".format(self.endpoint, METHOD),
                          params={"uid": tenant, "stats": True},

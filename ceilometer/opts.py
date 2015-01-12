@@ -122,7 +122,9 @@ def list_opts():
         ('publisher', ceilometer.publisher.utils.OPTS),
         ('publisher_notifier', ceilometer.publisher.messaging.NOTIFIER_OPTS),
         ('publisher_rpc', ceilometer.publisher.messaging.RPC_OPTS),
-        ('service_credentials', ceilometer.service.CLI_OPTS),
+        ('service_credentials',
+         itertools.chain(ceilometer.service.CLI_OPTS,
+                         ceilometer.objectstore.rgw.CREDENTIAL_OPTS))
         ('service_types',
          itertools.chain(ceilometer.energy.kwapi.SERVICE_OPTS,
                          ceilometer.image.glance.SERVICE_OPTS,
