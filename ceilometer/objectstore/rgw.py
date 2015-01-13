@@ -61,8 +61,6 @@ class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
         tenants = resources
-        import pdb
-        pdb.set_trace()
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
                                                        cache, tenants):
             for it in bucket_info.buckets:
