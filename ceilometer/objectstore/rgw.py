@@ -1,6 +1,3 @@
-import requests
-from awsauth import S3Auth
-
 from oslo.utils import timeutils
 from oslo.config import cfg
 
@@ -8,6 +5,10 @@ from ceilometer.i18n import _
 from ceilometer import sample
 from ceilometer.agent import plugin_base
 from ceilometer.openstack.common import log
+from ceilometer.objectstore.rgw_client import RGWAdminClient as client
+
+import pdb
+pdb.set_trace()
 
 LOG = log.getLogger(__name__)
 
@@ -32,36 +33,47 @@ cfg.CONF.import_group('service_credentials', 'ceilometer.service')
 
 
 class _Base(plugin_base.PollsterBase):
-
+    import pdb
+    pdb.set_trace()
+    METHOD = 'bucket'
+    
     def __init__(self):
         self.access_key = cfg.CONF.service_credentials.rgw_access_key
         self.secret = cfg.CONF.service_credentials.rgw_secret_key
         self.endpoint = 'http://127.0.0.1:8080/admin'
-        self.host = '127.0.0.1:8080'
+        self.rgw_client = client(endpoint,self.access_key,self.secret)
         
     @property
     def default_discovery(self):
         return 'tenant'
 
+    @property
+    def CACHE_KEY_METHOD(self):
+        return 'rgw.get_%s' % self.METHOD
+
+    def _iter_accounts(self, ksclient, cache, tenants):
+        if self.CACHE_KEY_METHOD not in cache:
+            cache[self.CACHE_KEY_METHOD] = list(self._get_account_info(
+                ksclient, tenants))
+        return iter(cache[self.CACHE_KEY_METHOD])
+
+    def _get_account_info(self, ksclient, tenants):
+        for t in tenants:
+            api_method = 'get_%s' %self.METHOD
+            yield (t.id, getattr(self.rgw_client, api_method) t.id)
 
 class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
-        tenants = resources
-        tenant = "admin"
-        METHOD = "bucket"
-        r = requests.get("{0}/{1}".format(self.endpoint, METHOD),
-                         params={"uid": tenant, "stats": True},
-                         auth=S3Auth(self.access_key, self.secret, self.host)
-                         )
-        bucket_data = r.json()
-
-        for it in bucket_data:
-            for k, v in it["usage"].items():
+        import pdb
+        pdb.set_trace()
+        for tenant, bucket_info in self._iter_accounts(manager.keystone,
+                                                   cache, tenants)
+        for it in bucket_info.buckets:
                 yield sample.Sample(
                     name='radosgw.containers.objects',
                     type=sample.TYPE_GAUGE,
-                    volume=v["num_objects"],
+                    volume=it["num_objects"],
                     unit='object',
                     user_id=None,
                     project_id=tenant,
