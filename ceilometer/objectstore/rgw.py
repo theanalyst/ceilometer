@@ -5,10 +5,7 @@ from ceilometer.i18n import _
 from ceilometer import sample
 from ceilometer.agent import plugin_base
 from ceilometer.openstack.common import log
-from ceilometer.objectstore.rgw_client import RGWAdminClient as client
-
-import pdb
-pdb.set_trace()
+from ceilometer.objectstore.rgw_client import RGWAdminClient as rgwclient
 
 LOG = log.getLogger(__name__)
 
@@ -33,15 +30,13 @@ cfg.CONF.import_group('service_credentials', 'ceilometer.service')
 
 
 class _Base(plugin_base.PollsterBase):
-    import pdb
-    pdb.set_trace()
     METHOD = 'bucket'
     
     def __init__(self):
         self.access_key = cfg.CONF.service_credentials.rgw_access_key
         self.secret = cfg.CONF.service_credentials.rgw_secret_key
         self.endpoint = 'http://127.0.0.1:8080/admin'
-        self.rgw_client = client(endpoint,self.access_key,self.secret)
+        self.rgw_client = rgwclient(self.endpoint,self.access_key,self.secret)
         
     @property
     def default_discovery(self):
@@ -60,24 +55,25 @@ class _Base(plugin_base.PollsterBase):
     def _get_account_info(self, ksclient, tenants):
         for t in tenants:
             api_method = 'get_%s' %self.METHOD
-            yield (t.id, getattr(self.rgw_client, api_method) t.id)
+            yield (t.id, getattr(self.rgw_client, api_method) (t.id))
 
 class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
+        tenants = resources
         import pdb
         pdb.set_trace()
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
-                                                   cache, tenants)
-        for it in bucket_info.buckets:
+                                                       cache, tenants):
+            for it in bucket_info.buckets:
                 yield sample.Sample(
                     name='radosgw.containers.objects',
                     type=sample.TYPE_GAUGE,
-                    volume=it["num_objects"],
+                    volume=int(it.num_objects),
                     unit='object',
                     user_id=None,
                     project_id=tenant,
-                    resource_id=tenant + '/' + it['bucket'],
+                    resource_id=tenant + '/' + it.name,
                     timestamp=timeutils.isotime(),
                     resource_metadata=None,
                 )

@@ -1,4 +1,5 @@
 import requests
+from collections import namedtuple
 from awsauth import S3Auth
 import six.moves.urllib.parse as urlparse
 
@@ -23,17 +24,15 @@ class RGWStats(object):
 
 class RGWAdminClient(object):
     def __init__(self, endpoint, access_key, secret_key):
-        import pdb 
-	pdb.set_trace()
 	self.access_key = access_key
-        self.secret_key = secret_key
+        self.secret = secret_key
         self.endpoint = endpoint
         self.hostname = urlparse.urlparse(endpoint).netloc
 
 
-    def get_bucket(tenant_id):
-        METHOD = "/bucket"
-        uri = urlparse.urljoin(self.endpoint, METHOD)
+    def get_bucket(self, tenant_id):
+        METHOD="bucket"
+        uri = "{0}/{1}".format(self.endpoint, METHOD)
         r = requests.get(uri, params={"uid": tenant_id, "stats": True},
                          auth=S3Auth(self.access_key,self.secret, self.hostname)
                          )
