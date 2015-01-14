@@ -80,24 +80,17 @@ class ContainersSizePollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
         tenants = resources
-        tenant = "admin"
-        METHOD = "bucket"
-        r = requests.get("{0}/{1}".format(self.endpoint, METHOD),
-                         params={"uid": tenant, "stats": True},
-                         auth=S3Auth(self.access_key, self.secret, self.host)
-                         )
-        bucket_data = r.json()
-
-        for it in bucket_data:
-            for k, v in it["usage"].items():
-                yield sample.Sample(
-                    name='radosgw.containers.objects.size',
-                    type=sample.TYPE_GAUGE,
-                    volume=v["size_kb"]*1024,
-                    unit='object',
-                    user_id=None,
-                    project_id=tenant,
-                    resource_id=tenant + '/' + it['bucket'],
-                    timestamp=timeutils.isotime(),
-                    resource_metadata=None,
-                )
+        for tenant, bucket_info in self._iter_accounts(manager.keystone,
+                                                       cache, tenants):
+            for it in bucket_info.buckets:
+                    yield sample.Sample(
+                        name='radosgw.containers.objects.size',
+                        type=sample.TYPE_GAUGE,
+                         volume=int(it.size)*1024,
+                        unit='object',
+                        user_id=None,
+                        project_id=tenant,
+                        resource_id=tenant + '/' + it.name,
+                        timestamp=timeutils.isotime(),
+                        resource_metadata=None,
+                    )
