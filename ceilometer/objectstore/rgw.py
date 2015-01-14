@@ -130,3 +130,21 @@ class ObjectsPollster(_Base):
                 timestamp=timeutils.isotime(),
                 resource_metadata=None,
                 )
+
+
+class ContainersPollster(_Base):
+    def get_samples(self, manager, cache, resources):
+        tenants = resources
+        for tenant, bucket_info in self._iter_accounts(manager.keystone,
+                                                   cache, tenants):
+            yield sample.Sample(
+                name='radosgw.containers',
+                type=sample.TYPE_GAUGE,
+                volume=int(bucket_info._num_buckets),
+                unit='object',
+                user_id=None,
+                project_id=tenant,
+                resource_id=tenant,
+                timestamp=timeutils.isotime(),
+                resource_metadata=None,
+                )
