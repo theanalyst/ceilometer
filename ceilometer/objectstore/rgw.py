@@ -94,3 +94,21 @@ class ContainersSizePollster(_Base):
                         timestamp=timeutils.isotime(),
                         resource_metadata=None,
                     )
+
+
+class ObjectsSizePollster(_Base):
+    def get_samples(self, manager, cache, resources):
+        tenants = resources
+        for tenant, bucket_info in self._iter_accounts(manager.keystone,
+                                                   cache, tenants):
+            yield sample.Sample(
+                name='radosgw.objects.size',
+                type=sample.TYPE_GAUGE,
+                volume=int(bucket_info._size)*1024,
+                unit='B',
+                user_id=None,
+                project_id=tenant,
+                resource_id=tenant,
+                timestamp=timeutils.isotime(),
+                resource_metadata=None,
+                )
