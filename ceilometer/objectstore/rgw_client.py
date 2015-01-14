@@ -51,16 +51,13 @@ class RGWAdminClient(object):
     def _process_bucket_stats(json_data, tenant_id):
         stats = RGWStats(tenant_id)
         Bucket = namedtuple('Bucket', 'name, num_objects, size')
+        stats._num_buckets = len(json_data)
         for it in json_data:
             for k, v in it["usage"].items():
-                stats._num_buckets += 1
                 stats._num_objects += v["num_objects"]
                 stats._size += v["size_kb"]
                 stats.buckets.append(Bucket(it["bucket"], v["num_objects"],
                                             v["size_kb"]))
-            else:
-                stats.buckets.append(Bucket(it["bucket"], 0, 0))
-                stats._num_buckets += 1
 
         return stats
 
