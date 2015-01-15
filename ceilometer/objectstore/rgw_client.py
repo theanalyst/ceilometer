@@ -40,12 +40,11 @@ class RGWAdminClient(object):
         return stats
 
     def get_usage(self, tenant_id):
-        METHOD = "usage"
         r = requests.get("{0}/{1}".format(self.endpoint, METHOD),
                          params={"uid": tenant_id},
                          auth=S3Auth(self.access_key, self.secret, self.host)
                          )
-        return list(self.iter_usage_stats(r.json()))
+        return list(self._process_usage_stats(r.json()))
 
     @staticmethod
     def _process_bucket_stats(json_data, tenant_id):
@@ -62,9 +61,5 @@ class RGWAdminClient(object):
         return stats
 
     @staticmethod
-    def iter_usage_stats(user_data):
-        Usage = namedtuple('Usage', 'api, s_bytes, r_bytes, ops, success_ops')
-        usage_data = user_data["summary"][0]["categories"]
-        for it in usage_data:
-            yield Usage(it["category"], it["bytes_sent"], it["bytes_received"],
-                        it["ops"], it["successful_ops"])
+    def _process_usage_stats(user_data):
+        return sum((it["successful_ops"] for it in usage_data))
