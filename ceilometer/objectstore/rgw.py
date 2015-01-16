@@ -54,7 +54,7 @@ class _Base(plugin_base.PollsterBase):
 
     def _get_account_info(self, ksclient, tenants):
         for t in tenants:
-            api_method = 'get_%s' %self.METHOD
+            api_method = 'get_%s' % self.METHOD
             yield (t.id, getattr(self.rgw_client, api_method) (t.id))
 
 class ContainerObjectsPollster(_Base):
@@ -150,8 +150,10 @@ class ContainersPollster(_Base):
                 )
 
 class UsagePollster(_Base):
+
+    METHOD = 'usage'
+
     def get_samples(self, manager, cache, resources):
-        METHOD = "usage"
         tenants = resources
         for tenant, usage in self._iter_accounts(manager.keystone,
                                                  cache, tenants):
