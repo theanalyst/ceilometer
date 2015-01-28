@@ -1,3 +1,24 @@
+#
+# Copyright 2015 eNovance
+#
+# Author: M R Swami Reddy <swamireddy@gmail.com>
+# Author: Abhishek L <swamireddy@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+"""Common code for working with ceph object stores
+"""
+
+
 from oslo.utils import timeutils
 from oslo.config import cfg
 import six.moves.urllib.parse as urlparse
@@ -77,8 +98,9 @@ class _Base(plugin_base.PollsterBase):
             api_method = 'get_%s' % self.METHOD
             yield (t.id, getattr(rgw_client, api_method) (t.id))
 
-class ContainerObjectsPollster(_Base):
+class ContainersObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
+
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
@@ -98,6 +120,7 @@ class ContainerObjectsPollster(_Base):
 
 class ContainersSizePollster(_Base):
     """Get info about object sizes in a container using RGW Admin APIs"""
+
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
@@ -117,6 +140,8 @@ class ContainersSizePollster(_Base):
 
 
 class ObjectsSizePollster(_Base):
+    """Iterate over all accounts, using keystone."""
+
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
@@ -135,6 +160,8 @@ class ObjectsSizePollster(_Base):
 
 
 class ObjectsPollster(_Base):
+    """Iterate over all accounts, using keystone."""
+
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
@@ -152,13 +179,13 @@ class ObjectsPollster(_Base):
                 )
 
 
-class ContainersPollster(_Base):
+class ObjectsContainersPollster(_Base):
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
                                                    cache, tenants):
             yield sample.Sample(
-                name='radosgw.containers',
+                name='radosgw.objects.containers',
                 type=sample.TYPE_GAUGE,
                 volume=int(bucket_info['num_buckets']),
                 unit='object',
@@ -178,10 +205,10 @@ class UsagePollster(_Base):
         for tenant, usage in self._iter_accounts(manager.keystone,
                                                  cache, tenants):
             yield sample.Sample(
-                name='radosgw.usage',
-                type=sample.TYPE_GAUGE,
+                name='radosgw.api.request',
+                type=sample.TYPE_DELTA,
                 volume=int(usage),
-                unit='requests',
+                unit='request',
                 user_id=None,
                 project_id=tenant,
                 resource_id=tenant,
