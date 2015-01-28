@@ -83,7 +83,7 @@ class ContainerObjectsPollster(_Base):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
                                                        cache, tenants):
-            for it in bucket_info.buckets:
+            for it in bucket_info['buckets']:
                 yield sample.Sample(
                     name='radosgw.containers.objects',
                     type=sample.TYPE_GAUGE,
@@ -97,17 +97,17 @@ class ContainerObjectsPollster(_Base):
                 )
 
 class ContainersSizePollster(_Base):
-    """Get info about object counts in a container using RGW Admin APIs"""
+    """Get info about object sizes in a container using RGW Admin APIs"""
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
                                                        cache, tenants):
-            for it in bucket_info.buckets:
+            for it in bucket_info['buckets']:
                     yield sample.Sample(
                         name='radosgw.containers.objects.size',
                         type=sample.TYPE_GAUGE,
-                         volume=int(it.size)*1024,
-                        unit='object',
+                        volume=int(it.size),
+                        unit='kB',
                         user_id=None,
                         project_id=tenant,
                         resource_id=tenant + '/' + it.name,
@@ -124,8 +124,8 @@ class ObjectsSizePollster(_Base):
             yield sample.Sample(
                 name='radosgw.objects.size',
                 type=sample.TYPE_GAUGE,
-                volume=int(bucket_info._size)*1024,
-                unit='B',
+                volume=int(bucket_info['size']),
+                unit='kB',
                 user_id=None,
                 project_id=tenant,
                 resource_id=tenant,
@@ -142,7 +142,7 @@ class ObjectsPollster(_Base):
             yield sample.Sample(
                 name='radosgw.objects',
                 type=sample.TYPE_GAUGE,
-                volume=int(bucket_info._num_objects),
+                volume=int(bucket_info['num_objects']),
                 unit='object',
                 user_id=None,
                 project_id=tenant,
@@ -160,7 +160,7 @@ class ContainersPollster(_Base):
             yield sample.Sample(
                 name='radosgw.containers',
                 type=sample.TYPE_GAUGE,
-                volume=int(bucket_info._num_buckets),
+                volume=int(bucket_info['num_buckets']),
                 unit='object',
                 user_id=None,
                 project_id=tenant,

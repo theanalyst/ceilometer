@@ -3,24 +3,6 @@ from collections import namedtuple
 from awsauth import S3Auth
 import six.moves.urllib.parse as urlparse
 
-class RGWStats(object):
-    def __init__(self, user_id):
-        """
-        Container holding some stats per user
-        """
-        self.uid = user_id
-        self._api_requests = 0
-        self._num_buckets = 0
-        self._num_objects = 0
-        self.buckets = []
-        self._size = 0
-
-    def __repr__(self):
-        return "<Stats uid={0} api_reqs={1} n_buckets={2}" \
-            "n_obj={3} size={4}>".format(self.uid, self._api_requests,
-                                         self._num_buckets, self._num_objects,
-                                         self._size)
-
 
 class RGWAdminClient(object):
     def __init__(self, endpoint, access_key, secret_key):
@@ -28,7 +10,6 @@ class RGWAdminClient(object):
         self.secret = secret_key
         self.endpoint = endpoint
         self.hostname = urlparse.urlparse(endpoint).netloc
-
 
     def get_bucket(self, tenant_id):
         METHOD="bucket"
@@ -49,15 +30,15 @@ class RGWAdminClient(object):
 
     @staticmethod
     def _process_bucket_stats(json_data, tenant_id):
-        stats = RGWStats(tenant_id)
+        stats = {'num_buckets': 0, 'buckets': [], 'size': 0, 'num_objects': 0}
         Bucket = namedtuple('Bucket', 'name, num_objects, size')
-        stats._num_buckets = len(json_data)
+        stats['num_buckets'] = len(json_data)
         for it in json_data:
             for k, v in it["usage"].items():
-                stats._num_objects += v["num_objects"]
-                stats._size += v["size_kb"]
-                stats.buckets.append(Bucket(it["bucket"], v["num_objects"],
-                                            v["size_kb"]))
+                stats['num_objects'] += v["num_objects"]
+                stats['size'] += v["size_kb"]
+                stats['buckets'].append(Bucket(it["bucket"], v["num_objects"],
+                                               v["size_kb"]))
 
         return stats
 
