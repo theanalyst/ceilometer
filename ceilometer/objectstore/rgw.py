@@ -1,5 +1,6 @@
 from oslo.utils import timeutils
 from oslo.config import cfg
+import six.moves.urllib.parse as urlparse
 
 from ceilometer.i18n import _
 from ceilometer import sample
@@ -31,12 +32,12 @@ cfg.CONF.import_group('service_credentials', 'ceilometer.service')
 
 class _Base(plugin_base.PollsterBase):
     METHOD = 'bucket'
+    _ENDPOINT = None
+
     
     def __init__(self):
         self.access_key = cfg.CONF.service_credentials.rgw_access_key
         self.secret = cfg.CONF.service_credentials.rgw_secret_key
-        self.endpoint = 'http://127.0.0.1:8080/admin'
-        self.rgw_client = rgwclient(self.endpoint,self.access_key,self.secret)
         
     @property
     def default_discovery(self):
@@ -46,6 +47,23 @@ class _Base(plugin_base.PollsterBase):
     def CACHE_KEY_METHOD(self):
         return 'rgw.get_%s' % self.METHOD
 
+    @staticmethod
+    def _get_endpoint(ksclient):
+        # we store the endpoint as a base class attribute, so keystone is
+        # only ever called once, also we assume that in a single deployment
+        # we may be only deploying `radosgw` or `swift` as the object-store
+        if _Base._ENDPOINT is None:
+            try:
+                conf = cfg.CONF.service_credentials
+                rgw_url = ksclient.service_catalog.url_for(
+                    service_type=cfg.CONF.service_types.radosgw,
+                    endpoint_type=conf.os_endpoint_type)
+                _Base._ENDPOINT = urlparse.urljoin(rgw_url,'/admin')
+            except exceptions.EndpointNotFound:
+                LOG.debug(_("Radosgw endpoint not found"))
+        return _Base._ENDPOINT
+
+
     def _iter_accounts(self, ksclient, cache, tenants):
         if self.CACHE_KEY_METHOD not in cache:
             cache[self.CACHE_KEY_METHOD] = list(self._get_account_info(
@@ -53,9 +71,11 @@ class _Base(plugin_base.PollsterBase):
         return iter(cache[self.CACHE_KEY_METHOD])
 
     def _get_account_info(self, ksclient, tenants):
+        endpoint = self._get_endpoint(ksclient)
+        rgw_client = rgwclient(endpoint, self.access_key, self.secret)
         for t in tenants:
             api_method = 'get_%s' % self.METHOD
-            yield (t.id, getattr(self.rgw_client, api_method) (t.id))
+            yield (t.id, getattr(rgw_client, api_method) (t.id))
 
 class ContainerObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
