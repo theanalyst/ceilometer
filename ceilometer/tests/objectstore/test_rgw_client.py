@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Reliance Jio Infocomm Ltd 
+# Copyright (C) 2015 Reliance Jio Infocomm Ltd 
 #
 # Author: Abhishek Lekshmanan <abhishek.lekshmanan@ril.com>
 #
@@ -186,5 +186,3 @@ class TestRGWAdminClient(base.BaseTestCase):
         actual = self.client.get_usage('foo')
         expected = 6
         self.assertEqual(expected,actual)
-
-        

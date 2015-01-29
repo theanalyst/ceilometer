@@ -23,6 +23,7 @@ from oslo.utils import timeutils
 from oslo.config import cfg
 import six.moves.urllib.parse as urlparse
 
+from keystoneclient import exceptions
 from ceilometer.i18n import _
 from ceilometer import sample
 from ceilometer.agent import plugin_base
