@@ -3,6 +3,10 @@ from collections import namedtuple
 from awsauth import S3Auth
 import six.moves.urllib.parse as urlparse
 
+from ceilometer.i18n import _
+
+class RGWAdminAPIFailed(Exception):
+    pass
 
 class RGWAdminClient(object):
     def __init__(self, endpoint, access_key, secret_key):
@@ -11,25 +15,35 @@ class RGWAdminClient(object):
         self.endpoint = endpoint
         self.hostname = urlparse.urlparse(endpoint).netloc
 
-    def get_bucket(self, tenant_id):
-        METHOD="bucket"
-        uri = "{0}/{1}".format(self.endpoint, METHOD)
-        r = requests.get(uri, params={"uid": tenant_id, "stats": True},
-                         auth=S3Auth(self.access_key,self.secret, self.hostname)
+
+    def _make_request(self, path, req_params):
+        uri = "{0}/{1}".format(self.endpoint,path)
+        r = requests.get(uri, params=req_params,
+                         auth=S3Auth(self.access_key, self.secret, self.hostname)
                          )
-        stats = self._process_bucket_stats(r.json(), tenant_id)
+
+        if r.status_code != 200:
+            raise RGWAdminAPIFailed(
+                _('RGW AdminOps API returned %(status)s %(reason)s') %
+                {'status': r.status_code, 'reason': r.reason})
+
+        return r.json()
+
+    def get_bucket(self, tenant_id):
+        path = "bucket"
+        req_params = {"uid":tenant_id, "stats": "true"}
+        resp =self._make_request(path, req_params)
+        stats = self._process_bucket_stats(resp)
         return stats
 
     def get_usage(self, tenant_id):
-        METHOD="usage"
-        r = requests.get("{0}/{1}".format(self.endpoint, METHOD),
-                         params={"uid": tenant_id},
-                         auth=S3Auth(self.access_key, self.secret, self.hostname)
-                         )
-        return self._process_usage_stats(r.json())
+        path = "usage"
+        req_params = {"uid": tenant_id}
+        resp = self._make_request(path, req_params)
+        return self._process_usage_stats(resp)
 
     @staticmethod
-    def _process_bucket_stats(json_data, tenant_id):
+    def _process_bucket_stats(json_data):
         stats = {'num_buckets': 0, 'buckets': [], 'size': 0, 'num_objects': 0}
         Bucket = namedtuple('Bucket', 'name, num_objects, size')
         stats['num_buckets'] = len(json_data)
