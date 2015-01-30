@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 #
-# Copyright 2015 eNovance
+# Copyright 2015 Reliance Jio Infocomm Ltd.
 #
-# Author: M R Swami Reddy <swamireddy@gmail.com>
-# Author: Abhishek L <swamireddy@gmail.com>
+# Author: M R Swami Reddy <swami.reddy@ril.com>
+#         Abhishek L <abhishek.lekshmanan@ril.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
