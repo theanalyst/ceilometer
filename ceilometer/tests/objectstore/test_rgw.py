@@ -73,6 +73,8 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
          {'factory': rgw.ContainersObjectsPollster}),
         ('radosgw.containers.objects.size',
          {'factory': rgw.ContainersSizePollster}),
+        ('radosgw.api.request',
+         {'factory': rgw.UsagePollster}),
     ]
 
     @staticmethod
