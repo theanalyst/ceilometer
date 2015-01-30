@@ -1,8 +1,9 @@
-#rgw!/usr/bin/env python
+#!/usr/bin/env python
 #
-# Copyright 2012 eNovance <licensing@enovance.com>
+# Copyright 2015 Reliance Jio Infocomm Ltd
 #
-# Author: Guillaume Pernot <gpernot@praksys.org>
+# Author: Abhishek L <abhishek.lekshmanan@ril.com>
+#         Swami Reddy <swami.reddy@ril.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -27,15 +28,11 @@ import testscenarios.testcase
 from ceilometer.agent import manager
 from ceilometer.objectstore import rgw
 from ceilometer.objectstore.rgw_client import RGWAdminClient as rgw_client
-#rgw_client = rgwclient('http://rgw.objectstore.com/swift','abcd','efgc')
-rgw_client = rgwclient('http://127.0.0.1:8080/admin', 'abcde','secret')
-
 
 Bucket = collections.namedtuple('Bucket', 'name, num_objects, size')
-bucket_list1 = [Bucket('somefoo1',1000,1000), Bucket('somefoo11',1,42), ]
-bucket_list2 = [Bucket('somefoo2',1000,1000), Bucket('somefoo21',1,42), ]
-bucket_list3 = [Bucket('somefoo3',1000,1000), Bucket('somefoo31',1,42), ]
-bucket_list4 = [Bucket('somefoo4',1000,1000), Bucket('somefoo41',1,42), ]
+bucket_list1 = [Bucket('somefoo1',10,7),]
+bucket_list2 = [Bucket('somefoo2',2,9),]
+bucket_list3 = [Bucket('unlisted',100,100)]
 
 GET_BUCKETS = [('tenant-000', {'num_buckets':2,'size':1042,'num_objects':1001, 'buckets':bucket_list1} ),
                ('tenant-001', {'num_buckets':2,'size':1042,'num_objects':1001, 'buckets':bucket_list2} ),
@@ -132,7 +129,7 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
             samples = list(self.pollster.get_samples(self.manager, {},
                                                      ASSIGNED_TENANTS))
 
-        self.assertEqual(4, len(samples), self.pollster.__class__)
+        self.assertEqual(2, len(samples), self.pollster.__class__)
 
     def test_get_meter_names(self):
         with mockpatch.PatchObject(self.factory, '_iter_accounts',
@@ -143,37 +140,34 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
         self.assertEqual(set([samples[0].name]),
                          set([s.name for s in samples]))
 
-#    def test_only_poll_assigned(self):
-#        mock_method = mock.MagicMock()
-#        endpoint = 'end://point/'
-#        api_method = 'get_%s' % self.pollster.METHOD
-#	print "SWAMI API METHOD %s" % api_method
-#
-#        with mockpatch.PatchObject(rgwclient(endpoint,'foo','bar'), api_method, new=mock_method):
-#            with mockpatch.PatchObject(
-#                    self.manager.keystone.service_catalog, 'url_for',
-#                    return_value=endpoint):
-#                list(self.pollster.get_samples(self.manager, {},
-#                                               ASSIGNED_TENANTS))
-#		#print "HELLO"
-#        expected = [mock.call(t.id)
-#                    for t in ASSIGNED_TENANTS]
-#        self.assertEqual(expected, mock_method.call_args_list)
-##
-#    def test_get_endpoint_only_once(self):
-#        mock_url_for = mock.MagicMock()
-#        api_method = 'get_%s' % self.pollster.METHOD
-#        with mockpatch.PatchObject(rgw_client, api_method,
-#                                   new=mock.MagicMock()):
-#            with mockpatch.PatchObject(
-#                    self.manager.keystone.service_catalog, 'url_for',
-#                    new=mock_url_for):
-#                list(self.pollster.get_samples(self.manager, {},
-#                                               ASSIGNED_TENANTS))
-#                list(self.pollster.get_samples(self.manager, {},
-#                                               ASSIGNED_TENANTS))
-#        self.assertEqual(1, mock_url_for.call_count)
-#
+    def test_only_poll_assigned(self):
+        mock_method = mock.MagicMock()
+        endpoint = 'http://127.0.0.1:8000/admin'
+        api_method = 'get_%s' % self.pollster.METHOD
+        with mockpatch.PatchObject(rgw_client, api_method, new=mock_method):
+            with mockpatch.PatchObject(
+                    self.manager.keystone.service_catalog, 'url_for',
+                    return_value=endpoint):
+                list(self.pollster.get_samples(self.manager, {},
+                                              ASSIGNED_TENANTS))
+        expected = [mock.call(t.id)
+                    for t in ASSIGNED_TENANTS]
+        self.assertEqual(expected, mock_method.call_args_list)
+
+    def test_get_endpoint_only_once(self):
+        mock_url_for = mock.MagicMock()
+        api_method = 'get_%s' % self.pollster.METHOD
+        with mockpatch.PatchObject(rgw_client, api_method,
+                                  new=mock.MagicMock()):
+            with mockpatch.PatchObject(
+                    self.manager.keystone.service_catalog, 'url_for',
+                    new=mock_url_for):
+                list(self.pollster.get_samples(self.manager, {},
+                                              ASSIGNED_TENANTS))
+                list(self.pollster.get_samples(self.manager, {},
+                                              ASSIGNED_TENANTS))
+        self.assertEqual(1, mock_url_for.call_count)
+
     def test_endpoint_notfound(self):
         with mockpatch.PatchObject(
                 self.manager.keystone.service_catalog, 'url_for',
