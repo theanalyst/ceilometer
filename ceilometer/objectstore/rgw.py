@@ -94,6 +94,9 @@ class _Base(plugin_base.PollsterBase):
 
     def _get_account_info(self, ksclient, tenants):
         endpoint = self._get_endpoint(ksclient)
+        if not endpoint:
+            raise StopIteration()
+
         rgw_client = rgwclient(endpoint, self.access_key, self.secret)
         for t in tenants:
             api_method = 'get_%s' % self.METHOD
