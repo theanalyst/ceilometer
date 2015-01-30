@@ -30,13 +30,17 @@ from ceilometer.objectstore import rgw
 from ceilometer.objectstore.rgw_client import RGWAdminClient as rgw_client
 
 Bucket = collections.namedtuple('Bucket', 'name, num_objects, size')
-bucket_list1 = [Bucket('somefoo1',10,7),]
-bucket_list2 = [Bucket('somefoo2',2,9),]
-bucket_list3 = [Bucket('unlisted',100,100)]
+bucket_list1 = [Bucket('somefoo1', 10, 7)]
+bucket_list2 = [Bucket('somefoo2', 2, 9)]
+bucket_list3 = [Bucket('unlisted', 100, 100)]
 
-GET_BUCKETS = [('tenant-000', {'num_buckets':2,'size':1042,'num_objects':1001, 'buckets':bucket_list1} ),
-               ('tenant-001', {'num_buckets':2,'size':1042,'num_objects':1001, 'buckets':bucket_list2} ),
-               ('tenant-002-ignored', {'num_buckets':2,'size':1042,'num_objects':1001, 'buckets':bucket_list3} ) ]
+GET_BUCKETS = [('tenant-000', {'num_buckets': 2, 'size': 1042,
+                               'num_objects': 1001, 'buckets': bucket_list1}),
+               ('tenant-001', {'num_buckets': 2, 'size': 1042,
+                               'num_objects': 1001, 'buckets': bucket_list2}),
+               ('tenant-002-ignored', {'num_buckets': 2, 'size': 1042,
+                                       'num_objects': 1001,
+                                       'buckets': bucket_list3})]
 
 GET_USAGE = [('tenant-000', 10),
              ('tenant-001', 11),
@@ -54,7 +58,7 @@ class TestManager(manager.AgentManager):
 
 
 class TestRgwPollster(testscenarios.testcase.WithScenarios,
-                        base.BaseTestCase):
+                      base.BaseTestCase):
 
     # Define scenarios to run all of the tests against all of the
     # pollsters.
@@ -92,7 +96,6 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
         else:
             self.ACCOUNTS = GET_USAGE
 
-
     def tearDown(self):
         super(TestRgwPollster, self).tearDown()
         rgw._Base._ENDPOINT = None
@@ -118,9 +121,9 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
         api_method = 'get_%s' % self.pollster.METHOD
 
         with mockpatch.PatchObject(rgw_client, api_method, new=mock_method):
-             cache = {self.pollster.CACHE_KEY_METHOD: [self.ACCOUNTS[0]]}
-             data = list(self.pollster._iter_accounts(mock.Mock(), cache,
-                                                      ASSIGNED_TENANTS))
+            cache = {self.pollster.CACHE_KEY_METHOD: [self.ACCOUNTS[0]]}
+            data = list(self.pollster._iter_accounts(mock.Mock(), cache,
+                                                     ASSIGNED_TENANTS))
         self.assertEqual([self.ACCOUNTS[0]], data)
 
     def test_metering(self):
@@ -149,7 +152,7 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
                     self.manager.keystone.service_catalog, 'url_for',
                     return_value=endpoint):
                 list(self.pollster.get_samples(self.manager, {},
-                                              ASSIGNED_TENANTS))
+                                               ASSIGNED_TENANTS))
         expected = [mock.call(t.id)
                     for t in ASSIGNED_TENANTS]
         self.assertEqual(expected, mock_method.call_args_list)
@@ -158,14 +161,14 @@ class TestRgwPollster(testscenarios.testcase.WithScenarios,
         mock_url_for = mock.MagicMock()
         api_method = 'get_%s' % self.pollster.METHOD
         with mockpatch.PatchObject(rgw_client, api_method,
-                                  new=mock.MagicMock()):
+                                   new=mock.MagicMock()):
             with mockpatch.PatchObject(
                     self.manager.keystone.service_catalog, 'url_for',
                     new=mock_url_for):
                 list(self.pollster.get_samples(self.manager, {},
-                                              ASSIGNED_TENANTS))
+                                               ASSIGNED_TENANTS))
                 list(self.pollster.get_samples(self.manager, {},
-                                              ASSIGNED_TENANTS))
+                                               ASSIGNED_TENANTS))
         self.assertEqual(1, mock_url_for.call_count)
 
     def test_endpoint_notfound(self):

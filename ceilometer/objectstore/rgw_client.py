@@ -24,21 +24,23 @@ import six.moves.urllib.parse as urlparse
 
 from ceilometer.i18n import _
 
+
 class RGWAdminAPIFailed(Exception):
     pass
 
+
 class RGWAdminClient(object):
     def __init__(self, endpoint, access_key, secret_key):
-	self.access_key = access_key
+        self.access_key = access_key
         self.secret = secret_key
         self.endpoint = endpoint
         self.hostname = urlparse.urlparse(endpoint).netloc
 
-
     def _make_request(self, path, req_params):
-        uri = "{0}/{1}".format(self.endpoint,path)
+        uri = "{0}/{1}".format(self.endpoint, path)
         r = requests.get(uri, params=req_params,
-                         auth=S3Auth(self.access_key, self.secret, self.hostname)
+                         auth=S3Auth(self.access_key, self.secret,
+                                     self.hostname)
                          )
 
         if r.status_code != 200:
@@ -50,8 +52,8 @@ class RGWAdminClient(object):
 
     def get_bucket(self, tenant_id):
         path = "bucket"
-        req_params = {"uid":tenant_id, "stats": "true"}
-        resp =self._make_request(path, req_params)
+        req_params = {"uid": tenant_id, "stats": "true"}
+        resp = self._make_request(path, req_params)
         stats = self._process_bucket_stats(resp)
         return stats
 

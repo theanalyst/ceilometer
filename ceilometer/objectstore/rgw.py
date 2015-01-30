@@ -57,11 +57,10 @@ class _Base(plugin_base.PollsterBase):
     METHOD = 'bucket'
     _ENDPOINT = None
 
-    
     def __init__(self):
         self.access_key = cfg.CONF.service_credentials.rgw_access_key
         self.secret = cfg.CONF.service_credentials.rgw_secret_key
-        
+
     @property
     def default_discovery(self):
         return 'tenant'
@@ -81,11 +80,10 @@ class _Base(plugin_base.PollsterBase):
                 rgw_url = ksclient.service_catalog.url_for(
                     service_type=cfg.CONF.service_types.radosgw,
                     endpoint_type=conf.os_endpoint_type)
-                _Base._ENDPOINT = urlparse.urljoin(rgw_url,'/admin')
+                _Base._ENDPOINT = urlparse.urljoin(rgw_url, '/admin')
             except exceptions.EndpointNotFound:
                 LOG.debug(_("Radosgw endpoint not found"))
         return _Base._ENDPOINT
-
 
     def _iter_accounts(self, ksclient, cache, tenants):
         if self.CACHE_KEY_METHOD not in cache:
@@ -101,7 +99,8 @@ class _Base(plugin_base.PollsterBase):
         rgw_client = rgwclient(endpoint, self.access_key, self.secret)
         for t in tenants:
             api_method = 'get_%s' % self.METHOD
-            yield (t.id, getattr(rgw_client, api_method) (t.id))
+            yield(t.id, getattr(rgw_client, api_method)(t.id))
+
 
 class ContainersObjectsPollster(_Base):
     """Get info about object counts in a container using RGW Admin APIs"""
@@ -122,6 +121,7 @@ class ContainersObjectsPollster(_Base):
                     timestamp=timeutils.isotime(),
                     resource_metadata=None,
                 )
+
 
 class ContainersSizePollster(_Base):
     """Get info about object sizes in a container using RGW Admin APIs"""
@@ -150,7 +150,7 @@ class ObjectsSizePollster(_Base):
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
-                                                   cache, tenants):
+                                                       cache, tenants):
             yield sample.Sample(
                 name='radosgw.objects.size',
                 type=sample.TYPE_GAUGE,
@@ -170,7 +170,7 @@ class ObjectsPollster(_Base):
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
-                                                   cache, tenants):
+                                                       cache, tenants):
             yield sample.Sample(
                 name='radosgw.objects',
                 type=sample.TYPE_GAUGE,
@@ -188,7 +188,7 @@ class ObjectsContainersPollster(_Base):
     def get_samples(self, manager, cache, resources):
         tenants = resources
         for tenant, bucket_info in self._iter_accounts(manager.keystone,
-                                                   cache, tenants):
+                                                       cache, tenants):
             yield sample.Sample(
                 name='radosgw.objects.containers',
                 type=sample.TYPE_GAUGE,
@@ -200,6 +200,7 @@ class ObjectsContainersPollster(_Base):
                 timestamp=timeutils.isotime(),
                 resource_metadata=None,
                 )
+
 
 class UsagePollster(_Base):
 
@@ -220,4 +221,3 @@ class UsagePollster(_Base):
                 timestamp=timeutils.isotime(),
                 resource_metadata=None,
                 )
-
