@@ -212,7 +212,7 @@ class UsagePollster(_Base):
                                                  cache, tenants):
             yield sample.Sample(
                 name='radosgw.api.request',
-                type=sample.TYPE_GUAGE,
+                type=sample.TYPE_GAUGE,
                 volume=int(usage),
                 unit='request',
                 user_id=None,
