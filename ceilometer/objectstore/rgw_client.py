@@ -26,7 +26,7 @@ class RGWAdminAPIFailed(Exception):
     pass
 
 class RGWAdminClient(object):
-    def __init__(self, endpoint="http://127.0.0.1:8080/admin", access_key="abcd", secret_key="abcd"):
+    def __init__(self, endpoint, access_key, secret_key):
 	self.access_key = access_key
         self.secret = secret_key
         self.endpoint = endpoint
